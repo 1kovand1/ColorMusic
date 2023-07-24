@@ -19,9 +19,17 @@
 #include "defines.h"
 #include "IRCode.h"
 #include "colorMusic.h"
+#if BLUETOOTH
+  #include "bluetooth.h"
+#endif
 
 void setup() {
-  Serial.begin(9600);
+  #ifdef DEBUG
+    Serial.begin(DEBUG_RATE);
+  #endif
+  #if BLUETOOTH && (!defined DEBUG || BLUETOOTH_IFACE != Serial)
+    BLUETOOTH_IFACE.begin(BLUETOOTH_RATE)
+  #endif
   FastLED.addLeds<WS2811, LED_PIN, GRB>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
   if (CURRENT_LIMIT > 0) FastLED.setMaxPowerInVoltsAndMilliamps(5, CURRENT_LIMIT);
   FastLED.setBrightness(BRIGHTNESS);
@@ -108,6 +116,9 @@ void loop() {
   buttonTick();     // опрос и обработка кнопки
 #if REMOTE_TYPE != 0
   remoteTick();     // опрос ИК пульта
+#endif
+#if BLUETOOTH
+  processBluetooth(&this_mode, &BRIGHTNESS);
 #endif
   mainLoop();       // главный цикл обработки и отрисовки
   eepromTick();     // проверка не пора ли сохранить настройки
